@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /studio
+Disallow: /studio/
+
+Sitemap: https://zemphy.music/sitemap.xml

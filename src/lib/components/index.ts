@@ -1,0 +1,11 @@
+export { default as About } from './about.svelte';
+export { default as Booking } from './booking.svelte';
+export { default as Footer } from './footer.svelte';
+export { default as Hero } from './hero.svelte';
+export { default as MarkedText } from './marked-text.svelte';
+export { default as Marquee } from './marquee.svelte';
+export { default as Nav } from './nav.svelte';
+export { default as Repertoire } from './repertoire.svelte';
+export { default as Services } from './services.svelte';
+export { default as SideNav } from './side-nav.svelte';
+export { default as Testimonials } from './testimonials.svelte';

@@ -1,0 +1,54 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Sanity webhook fires this event on document publish; the chain is
+  # Sanity webhook -> repository_dispatch -> this workflow -> Netlify CLI
+  # upload. The polyym deploy model intentionally bypasses Netlify's own
+  # auto-build path so a content publish runs through the same lint and
+  # type-check gates as a code change. Wiring details live outside the repo
+  # in ../SETUP.md (kept private since this repo is public).
+  repository_dispatch:
+    types: [sanity-publish]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+
+      - name: Deploy preview
+        if: github.event_name == 'pull_request'
+        run: npx netlify-cli@latest deploy --dir=build --message="PR #${{ github.event.pull_request.number }} @ ${{ github.sha }}"
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+      - name: Deploy to production
+        if: |
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
+          || github.event_name == 'repository_dispatch'
+        run: npx netlify-cli@latest deploy --prod --dir=build --message="${{ github.event_name == 'repository_dispatch' && 'Sanity publish' || 'Commit' }} ${{ github.sha }}"
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

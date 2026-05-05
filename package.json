@@ -1,0 +1,65 @@
+{
+	"name": "zemphy-music-ui",
+	"version": "1.0.0",
+	"license": "UNLICENSED",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"packageManager": "npm@11.6.2",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "svelte-kit sync && vitest run",
+		"test:watch": "svelte-kit sync && vitest",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --cache --write .",
+		"format:check": "prettier --cache --check .",
+		"prepare": "husky && svelte-kit sync || true"
+	},
+	"lint-staged": {
+		"*.{ts,js,svelte,json,md,css,html}": "prettier --cache --write",
+		"*.{ts,js,svelte}": "eslint --cache --fix"
+	},
+	"overrides": {
+		"js-yaml": "^4.1.0",
+		"cookie": "^0.7.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@sveltejs/adapter-netlify": "^6.0.4",
+		"@sveltejs/kit": "^2.59.1",
+		"@sveltejs/vite-plugin-svelte": "^7.1.0",
+		"@types/node": "^25.6.0",
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"eslint": "^10.3.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.17.1",
+		"eslint-plugin-unicorn": "^64.0.0",
+		"globals": "^17.6.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.4.0",
+		"prettier": "^3.8.3",
+		"prettier-plugin-svelte": "^3.5.1",
+		"svelte": "^5.55.5",
+		"svelte-check": "^4.4.8",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.59.2",
+		"vite": "^8.0.10",
+		"vitest": "^4.1.5"
+	},
+	"dependencies": {
+		"@sanity/client": "^7.22.0",
+		"@sanity/image-url": "^2.1.1",
+		"@sanity/vision": "^5.24.0",
+		"react": "^19.2.5",
+		"react-dom": "^19.2.5",
+		"sanity": "^5.24.0"
+	}
+}

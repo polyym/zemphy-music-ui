@@ -1,0 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "22.22.2"
+
+# Sanity Studio at /studio/* needs a relaxed CSP: unsafe-eval for its codegen,
+# Sanity API origins for connect/img, and blob: for its web workers and inline
+# scripts. The public site below stays strict; only the editor route is loose.
+[[headers]]
+  for = "/studio/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data: https://cdn.sanity.io https://*.sanity.io; connect-src 'self' https://api.sanity.io https://*.api.sanity.io https://*.apicdn.sanity.io https://api.sanity.work wss://*.api.sanity.io; frame-src 'self' https://*.sanity.io https://core.sanity-cdn.com; worker-src 'self' blob:; base-uri 'self'; form-action 'self'"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cdn.sanity.io; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
