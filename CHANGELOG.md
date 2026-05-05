@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 _Nothing yet._
 
+## [1.0.1] - 2026-05-05
+
+### Fixed
+
+- Production deploys via `netlify-cli@latest` were failing with `PUBLIC_SANITY_PROJECT_ID and PUBLIC_SANITY_DATASET must be set` because netlify-cli v26 invokes `@netlify/build` and re-runs `netlify.toml`'s `[build] command` even when `--dir=build` is set, without inheriting the env vars passed to the GHA build step. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) now passes `--no-build` to skip the redundant rebuild (the artefact GHA already produced is what gets uploaded), and propagates `PUBLIC_SANITY_PROJECT_ID` / `PUBLIC_SANITY_DATASET` into the deploy step's env as a fallback for any future netlify-cli that ignores `--no-build`.
+
 ## [1.0.0] - 2026-05-05
 
 First production release. The codebase passes the polyym §18 definition-of-done checklist (lint, format, type-check, tests, build, security headers, accessibility, SEO).
@@ -72,5 +78,6 @@ First production release. The codebase passes the polyym §18 definition-of-done
 - `../SETUP.md` (outside the repo by design, since this codebase is public) — operational runbook for the deploy chain (GitHub repo, Netlify, Sanity CORS, webhook, secrets, troubleshooting).
 - `../zemphy-content.md` (outside the repo) — copy-paste reference for filling Studio for the first time, every field labelled with its value.
 
-[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/polyym/zemphy-music-ui/releases/tag/v1.0.0

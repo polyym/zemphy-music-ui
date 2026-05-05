@@ -37,18 +37,29 @@ jobs:
           PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
           PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
 
+      # `--no-build` tells netlify-cli to upload `build/` directly instead of
+      # invoking @netlify/build (which would re-run `[build] command` from
+      # netlify.toml — wasting CI time, and failing if env vars aren't also
+      # propagated into this step). The build that GHA just produced is the
+      # canonical artefact. PUBLIC_SANITY_* is also passed in as a safety net
+      # so a future netlify-cli that ignores --no-build still has what it
+      # needs to re-build.
       - name: Deploy preview
         if: github.event_name == 'pull_request'
-        run: npx netlify-cli@latest deploy --dir=build --message="PR #${{ github.event.pull_request.number }} @ ${{ github.sha }}"
+        run: npx netlify-cli@latest deploy --no-build --dir=build --message="PR #${{ github.event.pull_request.number }} @ ${{ github.sha }}"
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
 
       - name: Deploy to production
         if: |
           (github.event_name == 'push' && github.ref == 'refs/heads/main')
           || github.event_name == 'repository_dispatch'
-        run: npx netlify-cli@latest deploy --prod --dir=build --message="${{ github.event_name == 'repository_dispatch' && 'Sanity publish' || 'Commit' }} ${{ github.sha }}"
+        run: npx netlify-cli@latest deploy --no-build --prod --dir=build --message="${{ github.event_name == 'repository_dispatch' && 'Sanity publish' || 'Commit' }} ${{ github.sha }}"
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
