@@ -8,6 +8,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 _Nothing yet._
 
+## [1.1.3] - 2026-05-06
+
+Second hotfix on the home page. v1.1.1's switch to `$env/static/public` and v1.1.2's CI workflow patch got the bundle deploying again, but the live site still showed the "500 Something went wrong" overlay. The runtime symptom was now a different error: a Sanity GROQ query (`https://5b75k1rw.api.sanity.io/v2025-01-01/data/query/production?query=...`) being blocked by the public CSP's `connect-src 'self'`. The fix here addresses the underlying cause of why the client was making a runtime API call at all.
+
+Root cause: `src/routes/+page.ts` used a **universal** load (`+page.ts` rather than `+page.server.ts`). Universal loads run on both server and client by design — the client re-runs the load function on hydration, even for prerendered routes. The data fetched at build time was used to produce the SSR'd HTML, but the SvelteKit start call at the bottom of the document was emitted as `data:[null,null]`, with no embedded data, so the client tried to re-fetch from Sanity. Local `npm run preview` didn't enforce CSP and the re-fetch quietly succeeded; production CSP blocked it and the SvelteKit error boundary took over with the same "500 Something went wrong" overlay we just fixed in v1.1.1. Two different root causes producing the same surface symptom.
+
+For our build-time-fixed CMS data, the right primitive is **server-only load** (`+page.server.ts`): runs only on the server during prerender, the result is always embedded into the HTML for hydration, the client never re-fetches. The function code itself doesn't change — just the filename — but the SvelteKit semantics shift to "this is build-time data, do not duplicate on the client".
+
+### Fixed
+
+- Renamed [`src/routes/+page.ts`](src/routes/+page.ts) to [`src/routes/+page.server.ts`](src/routes/+page.server.ts). No code changes inside; the file is byte-identical apart from the filename. The new filename tells SvelteKit the load is server-only, so the GROQ result is serialised into the prerendered HTML's hydration block (`data:[null,{...}]` instead of `data:[null,null]`) and the client uses the embedded data on hydration without making any runtime API call. Verified by inspecting the rebuilt `build/index.html`: the SvelteKit start script now embeds the full result (services, songs, testimonials, siteSettings, hero/about/services/repertoire/testimonials/booking sections) as a serialised devalue payload. The runtime Sanity API request that v1.1.1's CSP was blocking no longer happens, so no CSP allowance for `connect-src` was needed.
+
 ## [1.1.2] - 2026-05-06
 
 CI-only follow-up to v1.1.1. The v1.1.1 commit landed on `main` but its `Tests` workflow run failed before the deploy step could fire, so the v1.1.1 hydration fix never reached production — the live site stayed on v1.1.0 with the home-page error overlay. v1.1.2 fixes the workflow so v1.1.1's `client.ts` change can finally deploy.
@@ -138,7 +150,8 @@ First production release. The codebase passes the polyym §18 definition-of-done
 - `README.md` — project overview, stack, structure, load-bearing conventions, scripts.
 - Operational runbook (deploy chain, webhook config, secrets, troubleshooting) and Studio content reference (first-fill copy-paste values) are kept private; not in the public repo.
 
-[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.2...HEAD
+[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.1...v1.1.0
