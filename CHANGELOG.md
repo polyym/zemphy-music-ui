@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 _Nothing yet._
 
+## [1.1.1] - 2026-05-06
+
+Hotfix for the home-page hydration crash that surfaced once v1.1.0 deployed. The site loaded, Sanity images rendered into the prerendered HTML, then the client-side bundle threw on hydration and the SvelteKit error boundary took over the page with a "500 Something went wrong" overlay (the 500 is the boundary's own status text, not the HTTP response — the document itself was 200).
+
+Root cause: [`src/lib/sanity/client.ts`](src/lib/sanity/client.ts) imported `env` from `$env/dynamic/public`, which is read at runtime via the `_app/env.js` endpoint. On this Netlify deploy that endpoint returns `export const env={}` because the project's `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` are set in GitHub Actions Variables (build-time) but not in Netlify's runtime environment configuration. v1.0.1 didn't trip on this because `+page.svelte` didn't directly import the Sanity image builder; only About / Testimonials did, and their chunks weren't loaded when those sections weren't published. v1.1.0 added an `imageUrl` import to `+page.svelte` for the new `socialImage` URL building, which dragged `client.ts` into the home-page critical hydration chunk and exposed the latent issue.
+
+### Fixed
+
+- [`src/lib/sanity/client.ts`](src/lib/sanity/client.ts): switched the env-var imports from `$env/dynamic/public` to `$env/static/public`. The values are inlined into both server and client bundles at build time and never round-trip through `_app/env.js`, so the empty Netlify runtime env can no longer break hydration. The explicit `if (!PROJECT_ID || !DATASET) throw` is gone — `vite build` already fails loudly when a `$env/static/public` symbol is undeclared, so the manual guard is redundant. A new comment block in the file documents the trap so the next maintainer doesn't accidentally swap the primitives back.
+
 ## [1.1.0] - 2026-05-06
 
 Bug-fix release with several backwards-compatible additions. Headline fixes: the embedded Studio at `/studio` no longer crashes the backing Netlify function on cold start, and four private-doc references (`../SETUP.md`, `../zemphy-content.md`, `../polyym-sveltekit-guide.md`, `../zemphy-design.html`) are gone from tracked files; they had appeared as broken links to anyone with only a clone of the repo.
@@ -115,7 +125,8 @@ First production release. The codebase passes the polyym §18 definition-of-done
 - `README.md` — project overview, stack, structure, load-bearing conventions, scripts.
 - Operational runbook (deploy chain, webhook config, secrets, troubleshooting) and Studio content reference (first-fill copy-paste values) are kept private; not in the public repo.
 
-[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/polyym/zemphy-music-ui/releases/tag/v1.0.0
