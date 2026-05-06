@@ -2,6 +2,8 @@
 
 The SvelteKit app behind [zemphy.music](https://zemphy.music): a one-page marketing site for an Irish singer-songwriter. Statically prerendered, content lives in Sanity, Studio is embedded at `/studio`, deployed to Netlify from GitHub Actions.
 
+This repo is the actual source of the live site rather than a generic template. Running it locally with the `.env.example` defaults will read the live Sanity dataset; if you want to use the codebase as a starting point for your own project you will need to swap `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` for your own Sanity project's values, and set up your own Netlify and GitHub Actions secrets.
+
 ## Quick start
 
 ```bash
@@ -12,22 +14,20 @@ npm install
 npm run dev
 ```
 
-Dev server runs at <http://localhost:5173>. Studio is at <http://localhost:5173/studio>; first sign-in needs the localhost origin allowed in Sanity's CORS settings (see [`../SETUP.md`](../SETUP.md)).
+Dev server runs at <http://localhost:5173>. Studio is at <http://localhost:5173/studio>.
 
 ## Stack
 
-| Layer         | Choice                                                                                  |
-| ------------- | --------------------------------------------------------------------------------------- |
-| Framework     | SvelteKit 2, Svelte 5 in runes mode                                                     |
-| Language      | TypeScript (`strict: true`)                                                             |
-| CMS           | Sanity (project `5b75k1rw`, dataset `production`); Studio embedded as a `/studio` route |
-| Adapter       | `@sveltejs/adapter-netlify` (`edge: false`, `split: false`)                             |
-| Hosting       | Netlify (static assets + one Function serving the `/studio/*` SPA shell)                |
-| CI and deploy | GitHub Actions builds; Netlify CLI uploads. No Netlify auto-build.                      |
-| Tests         | Vitest                                                                                  |
-| Lint / format | ESLint flat config, Prettier, Husky pre-commit                                          |
-
-Codebase conventions (filename casing, lint rules, anti-patterns, deploy model) follow [`../polyym-sveltekit-guide.md`](../polyym-sveltekit-guide.md), kept outside the repo as the binding style guide.
+| Layer         | Choice                                                                                    |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| Framework     | SvelteKit 2, Svelte 5 in runes mode                                                       |
+| Language      | TypeScript (`strict: true`)                                                               |
+| CMS           | Sanity (project `project_id`, dataset `production`); Studio embedded as a `/studio` route |
+| Adapter       | `@sveltejs/adapter-netlify` (`edge: false`, `split: false`)                               |
+| Hosting       | Netlify (static assets + one Function serving the `/studio/*` SPA shell)                  |
+| CI and deploy | GitHub Actions builds; Netlify CLI uploads. No Netlify auto-build.                        |
+| Tests         | Vitest                                                                                    |
+| Lint / format | ESLint flat config, Prettier, Husky pre-commit                                            |
 
 ## Project structure
 
@@ -39,11 +39,12 @@ src/
 │   ├── components/         # Nav, SideNav, Hero, Marquee, About, Services,
 │   │                       #   Repertoire, Testimonials, Booking, Footer, MarkedText
 │   ├── sanity/
-│   │   ├── client.ts       # build-time GROQ client
-│   │   ├── image.ts        # CDN URL builder
+│   │   ├── client.ts            # build-time GROQ client
+│   │   ├── image.ts             # CDN URL builder
+│   │   ├── studio-mount.svelte  # browser-only React mount of the embedded Studio
 │   │   ├── types.ts
-│   │   └── schemas/        # 7 singletons + 3 collections
-│   ├── constants.ts        # SITE_URL, POLYYM_GITHUB_URL, SONGS_PER_PAGE, TESTIMONIALS_PER_PAGE, sparkle timings
+│   │   └── schemas/             # 7 singletons + 3 collections
+│   ├── constants.ts        # SITE_URL, POLYYM_GITHUB_URL, page sizes, OG image dimensions, sparkle timings
 │   ├── constants.test.ts
 │   ├── marked-text.ts      # `*foo*` -> <em>, `\n` -> <br>, blank line -> paragraph
 │   └── marked-text.test.ts
@@ -66,12 +67,12 @@ sanity.config.ts                        # Studio config, structure tool, singlet
 
 A few things that are deliberately the way they are; changing them needs a wider read first.
 
-- **No hardcoded copy or links in the repo.** Every visible string and URL comes from Sanity. Section components render conditionally on data presence, so an empty CMS produces an empty page rather than a crash. Reference values for the first content fill live at [`../zemphy-content.md`](../zemphy-content.md) (intentionally outside the repo).
+- **No hardcoded copy or links in the repo.** Every visible string and URL comes from Sanity. Section components render conditionally on data presence, so an empty CMS produces an empty page rather than a crash.
 - **Italic accents via `*asterisks*`.** Heading and About body fields are plain text in Sanity. The [`marked-text`](src/lib/marked-text.ts) parser turns `*foo*` into `<em>foo</em>`, `\n` into `<br>`, and a blank line into a paragraph break. No portable text editor in Studio.
 - **GHA-driven deploys.** Netlify auto-build is intentionally unused; GitHub Actions builds the artefact and pushes it via Netlify CLI. A Sanity webhook fires `repository_dispatch` on publish so content changes go through the same lint, type-check, and test gates as a code change.
 - **Songs and testimonials paginate.** Songs use prev/next buttons (12 per page); testimonials use a horizontal scroll-snap carousel (2 per page) with side prev/next arrows in dedicated 4rem gutters and click-to-jump dots below. Both layouts fall back to single-column stacks below 900px viewport.
 - **Singletons are locked.** The Studio structure tool pins the seven singletons at the top, and document actions strip create / delete / duplicate / unpublish so editors can't accidentally orphan them.
-- **Per-path CSP.** The public site's CSP is strict (no `unsafe-eval`, no third-party origins beyond Sanity's image CDN); `/studio/*` relaxes it to what Sanity Studio actually needs. The two header blocks live in [`netlify.toml`](netlify.toml).
+- **Per-path CSP plus HSTS.** The public site's CSP is strict (no `unsafe-eval`, no third-party origins beyond Sanity's image CDN); `/studio/*` relaxes it to what Sanity Studio actually needs. `Strict-Transport-Security` is sent on every response with `includeSubDomains` and `preload`, so the domain is committed to HTTPS — backing out later requires the [hstspreload.org removal form](https://hstspreload.org/removal/). All security headers live in [`netlify.toml`](netlify.toml).
 - **Self-hosted fonts.** Fraunces and Manrope (variable woff2) live under `static/fonts/`, with the `unicode-range` subset matrix preserved from Google Fonts so browsers fetch only what they need.
 
 ## Scripts
@@ -91,14 +92,12 @@ A few things that are deliberately the way they are; changing them needs a wider
 
 CI runs `lint`, `format:check`, `test`, `check`, `build` on every push and PR.
 
-## Where to look
+## Further reading
 
-- **Standing up the deploy chain** (GitHub repo, Netlify, Sanity CORS, webhook, secrets, troubleshooting): [`../SETUP.md`](../SETUP.md).
-- **Filling Studio for the first time** (every field with a copy-pasteable value): [`../zemphy-content.md`](../zemphy-content.md).
-- **Codebase conventions** (filename casing, lint config, deploy model, anti-patterns): [`../polyym-sveltekit-guide.md`](../polyym-sveltekit-guide.md).
-- **Original design source** (single-file HTML/CSS/JS the components were ported from): [`../zemphy-design.html`](../zemphy-design.html).
-- **Release history**: [CHANGELOG.md](CHANGELOG.md).
+- **Live site**: <https://zemphy.music>
+- **Release history**: [CHANGELOG.md](CHANGELOG.md)
+- **Framework docs**: [SvelteKit](https://svelte.dev/docs/kit), [Sanity](https://www.sanity.io/docs), [Netlify](https://docs.netlify.com)
 
 ## License
 
-UNLICENSED. Private code for [zemphy.music](https://zemphy.music).
+`UNLICENSED`: the source is publicly viewable for transparency, but no licence is granted to fork, modify, or redistribute the code or any of its assets without explicit permission. The Sanity project ID baked into `.env.example` is read-only for the public dataset and won't grant any write access to a clone.

@@ -46,7 +46,16 @@
 
 	function scrollToPage(i: number) {
 		if (!trackEl) return;
-		trackEl.scrollTo({ left: i * trackEl.clientWidth, behavior: 'smooth' });
+		// Honour prefers-reduced-motion at click time. The CSS `scroll-behavior:
+		// smooth` on the track is also overridden by the matching media query
+		// below; this JS check covers the explicit scrollTo call.
+		const prefersReducedMotion =
+			typeof globalThis.matchMedia === 'function' &&
+			globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		trackEl.scrollTo({
+			left: i * trackEl.clientWidth,
+			behavior: prefersReducedMotion ? 'auto' : 'smooth'
+		});
 	}
 </script>
 
@@ -133,18 +142,21 @@
 			</div>
 
 			{#if totalPages > 1}
-				<div class="testimonials-dots" role="tablist" aria-label="Testimonial pages">
+				<!-- Plain pagination, not a tablist: the carousel pages aren't
+					 `tabpanel` regions, so `role="tab"`/`role="tablist"` would be a
+					 partial ARIA pattern. `aria-current="true"` on the active page
+					 is the canonical signal for pagination. -->
+				<div class="testimonials-dots" aria-label="Testimonial pages">
 					{#each pageIndices as i (i)}
 						<button
 							type="button"
-							role="tab"
-							aria-selected={i === activePage}
 							aria-label="Page {i + 1} of {totalPages}"
+							aria-current={i === activePage ? 'true' : undefined}
 							class:active={i === activePage}
 							onclick={() => {
 								scrollToPage(i);
-							}}
-						></button>
+							}}><span class="dot"></span></button
+						>
 					{/each}
 				</div>
 			{/if}
@@ -305,31 +317,43 @@
 		right: 0.5rem;
 	}
 
+	/* The button is the 24x24 hit area (WCAG 2.5.8) and stays visually
+	   transparent; the inner `.dot` span carries the 8x8 visual. Splitting
+	   them lets us hit a usable touch target without enlarging the dot. */
 	.testimonials-dots {
 		margin-top: 2rem;
 		display: flex;
 		justify-content: center;
-		gap: 0.7rem;
+		gap: 0.3rem;
 	}
 	.testimonials-dots button {
+		width: 24px;
+		height: 24px;
+		border: none;
+		background: none;
+		padding: 0;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.testimonials-dots button .dot {
+		display: block;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
 		background: var(--plum-soft);
 		opacity: 0.3;
-		border: none;
-		padding: 0;
-		cursor: pointer;
 		transition:
 			opacity 0.4s,
 			transform 0.4s,
 			background 0.4s,
 			box-shadow 0.4s;
 	}
-	.testimonials-dots button:hover {
+	.testimonials-dots button:hover .dot {
 		opacity: 0.6;
 	}
-	.testimonials-dots button.active {
+	.testimonials-dots button.active .dot {
 		opacity: 1;
 		transform: scale(1.4);
 		background: linear-gradient(135deg, var(--pastel-pink-deep), var(--pastel-lilac-deep));
@@ -337,7 +361,17 @@
 	}
 	.testimonials-dots button:focus-visible {
 		outline: 2px solid var(--plum);
-		outline-offset: 4px;
+		outline-offset: 2px;
+		border-radius: 50%;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.testimonials-track {
+			scroll-behavior: auto;
+		}
+		.testimonials-dots button .dot {
+			transition: none;
+		}
 	}
 
 	@media (max-width: 900px) {

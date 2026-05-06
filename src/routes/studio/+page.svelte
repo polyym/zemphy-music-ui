@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Studio</title>
+	<title>Studio · Zemphy</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

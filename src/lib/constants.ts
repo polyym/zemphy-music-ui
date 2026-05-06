@@ -24,3 +24,11 @@ export const TESTIMONIALS_PER_PAGE = 2;
 // GitHub repo for this project. Linked from the footer's "by polyym" credit.
 // The repo is public; update this constant if the repo is moved or renamed.
 export const POLYYM_GITHUB_URL = 'https://github.com/polyym/zemphy-music-ui';
+
+// Open Graph / Twitter card image dimensions. 1.91:1 is the recommended
+// aspect ratio for `twitter:card = summary_large_image` and `og:image`;
+// 1200x630 is the canonical resolution that satisfies it. The home page
+// passes both values to the Sanity image URL builder when emitting the
+// `og:image` and `twitter:image` meta tags.
+export const OG_IMAGE_WIDTH_PX = 1200;
+export const OG_IMAGE_HEIGHT_PX = 630;

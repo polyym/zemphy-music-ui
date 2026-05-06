@@ -26,8 +26,8 @@
 		<div class="copyright">© {parts.join(' · ')}</div>
 		<div class="attribution">
 			<span class="extra">Built&nbsp;</span>by
-			<a href={POLYYM_GITHUB_URL} target="_blank" rel="noopener">polyym</a><span class="extra"
-				>&nbsp;for ZEMPHY &lt;3</span
+			<a href={POLYYM_GITHUB_URL} target="_blank" rel="noopener noreferrer">polyym</a><span
+				class="extra">&nbsp;for ZEMPHY &lt;3</span
 			>
 		</div>
 	</footer>

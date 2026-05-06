@@ -65,7 +65,12 @@
 								{#if song.chillLink ?? song.energyLink}
 									<span class="song-versions">
 										{#if song.chillLink}
-											<a class="version chill" target="_blank" rel="noopener" href={song.chillLink}>
+											<a
+												class="version chill"
+												target="_blank"
+												rel="noopener noreferrer"
+												href={song.chillLink}
+											>
 												<svg
 													class="version-icon"
 													viewBox="0 0 24 24"
@@ -85,7 +90,7 @@
 											<a
 												class="version energy"
 												target="_blank"
-												rel="noopener"
+												rel="noopener noreferrer"
 												href={song.energyLink}
 											>
 												<span>High-energy version</span>

@@ -12,3 +12,7 @@ vite.config.ts.timestamp-*
 /coverage
 .eslintcache
 .prettiercache
+# Husky regenerates `.husky/_/` from the `prepare` script on every install,
+# so committing it just creates churn. The hook scripts (`.husky/pre-commit`
+# etc.) stay tracked.
+.husky/_/

@@ -12,7 +12,8 @@
 		SideNav,
 		Testimonials
 	} from '$lib/components';
-	import { SITE_URL } from '$lib/constants';
+	import { OG_IMAGE_HEIGHT_PX, OG_IMAGE_WIDTH_PX, SITE_URL } from '$lib/constants';
+	import { imageUrl } from '$lib/sanity/image';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -22,6 +23,12 @@
 
 	// JSON-LD MusicGroup block. Search engines parse this for rich-result
 	// styling on result pages. Only emitted when we have a name to attach.
+	// JSON.stringify does not escape the less-than character, so a CMS field
+	// containing a literal close-script-tag substring would terminate the
+	// inline script element prematurely. Replacing every less-than with its
+	// JSON unicode escape after stringify preserves the data (a JSON parser
+	// reads the value back as the original character) without leaving a
+	// literal less-than in the rendered HTML for the HTML parser to act on.
 	const musicGroupJsonLd = $derived.by(() => {
 		if (!settings?.logoName) return;
 		const sameAs: string[] = [];
@@ -35,7 +42,8 @@
 		};
 		if (sameAs.length > 0) payload.sameAs = sameAs;
 		if (settings.bookingEmail) payload.email = settings.bookingEmail;
-		return JSON.stringify(payload);
+		// eslint-disable-next-line unicorn/prefer-string-raw -- canonical JSON-LD <-escape form; matches `serialize-javascript` and is the pattern every JS dev recognises for this exact security fix
+		return JSON.stringify(payload).replaceAll('<', '\\u003c');
 	});
 
 	// Page title joins the brand wordmark with the hero kicker so search
@@ -52,6 +60,21 @@
 		return parts.join(' · ');
 	});
 	const ogDescription = $derived(hero?.tagline ?? '');
+
+	// Open Graph / Twitter card image. Twitter rejects `summary_large_image`
+	// when no image is provided, so the card type degrades to `summary` when
+	// the CMS field is empty. The OG_IMAGE_*_PX constants match the canonical
+	// 1.91:1 social-card aspect; see `src/lib/constants.ts`.
+	const socialImageUrl = $derived(
+		settings?.socialImage
+			? imageUrl(settings.socialImage)
+					.width(OG_IMAGE_WIDTH_PX)
+					.height(OG_IMAGE_HEIGHT_PX)
+					.fit('crop')
+					.url()
+			: undefined
+	);
+	const twitterCard = $derived(socialImageUrl ? 'summary_large_image' : 'summary');
 
 	// Build the JSON-LD tag via string concatenation so the source never
 	// contains the literal close-tag token. Svelte's HTML parser otherwise
@@ -77,12 +100,18 @@
 	{/if}
 	<meta property="og:url" content={SITE_URL} />
 	<link rel="canonical" href={SITE_URL} />
-	<meta name="twitter:card" content="summary_large_image" />
+	{#if socialImageUrl}
+		<meta property="og:image" content={socialImageUrl} />
+		<meta name="twitter:image" content={socialImageUrl} />
+	{/if}
+	<meta name="twitter:card" content={twitterCard} />
 	{#if ldScript}
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html ldScript}
 	{/if}
 </svelte:head>
+
+<a class="skip-link" href="#main">Skip to content</a>
 
 <div use:sparkles>
 	<Nav
@@ -93,7 +122,7 @@
 	/>
 	<SideNav labels={settings?.sideNavLabels} />
 
-	<main>
+	<main id="main" tabindex="-1">
 		<Hero
 			kicker={hero?.kicker}
 			displayName={hero?.displayName}

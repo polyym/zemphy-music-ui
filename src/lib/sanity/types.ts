@@ -29,6 +29,7 @@ export interface SiteSettings {
 	locationLine2?: string;
 	footerTagline?: string;
 	keywords?: string[];
+	socialImage?: SanityImage;
 }
 
 export interface HeroSection {

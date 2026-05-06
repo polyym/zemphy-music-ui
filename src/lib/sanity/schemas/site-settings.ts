@@ -85,6 +85,14 @@ export const siteSettings = defineType({
 			type: 'array',
 			of: [{ type: 'string' }],
 			validation: (rule) => rule.max(20)
+		}),
+		defineField({
+			name: 'socialImage',
+			title: 'Social share image',
+			description:
+				'Used as the Open Graph and Twitter card image when zemphy.music is shared on social or in chat. 1.91:1 aspect ratio (e.g. 1200x630) renders best. Optional; without one, link previews fall back to a basic summary card.',
+			type: 'image',
+			options: { hotspot: true }
 		})
 	],
 	preview: {

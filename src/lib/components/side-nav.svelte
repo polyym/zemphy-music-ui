@@ -75,7 +75,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		padding: 0.55rem 0.4rem;
+		/* Padding sized so the anchor's hit area clears WCAG 2.5.8's 24x24
+		   minimum target size around the 7px visual dot. */
+		padding: 0.55rem 0.6rem;
 		text-decoration: none;
 	}
 	.side-nav-dot {

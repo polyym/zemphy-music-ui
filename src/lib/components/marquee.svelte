@@ -3,14 +3,16 @@
 
 	// Render the keyword set twice back-to-back so the CSS keyframe animation
 	// produces a seamless infinite scroll. The single track translates by -50%,
-	// so the second copy slides into position as the first scrolls off.
+	// so the second copy slides into position as the first scrolls off. The
+	// duplicate copy is `aria-hidden` so screen readers announce the keyword
+	// list once, not twice.
 </script>
 
 {#if keywords && keywords.length > 0}
 	<div class="marquee">
 		<div class="marquee-track">
 			{#each [keywords, keywords] as set, setIndex (setIndex)}
-				<span>
+				<span aria-hidden={setIndex === 1 ? 'true' : undefined}>
 					{#each set as keyword, i (`${String(setIndex)}-${String(i)}`)}
 						{keyword}
 						<span class="dot"></span>

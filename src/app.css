@@ -217,6 +217,41 @@ button {
 	border-radius: 2px;
 }
 
+/* Skip-to-content affordance for keyboard users. Visually hidden until
+   focused, then slides into the top-left so the next Tab lands inside the
+   page's `<main>`. The `<main>` itself carries `tabindex="-1"` so it can
+   accept programmatic focus from this anchor; we suppress the focus ring
+   on it because the user explicitly requested the jump. */
+.skip-link {
+	position: fixed;
+	top: -100px;
+	left: 1rem;
+	background: var(--plum);
+	color: var(--ivory);
+	padding: 0.75rem 1.25rem;
+	border-radius: 8px;
+	font-family: var(--sans);
+	font-size: 0.85rem;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	text-decoration: none;
+	z-index: 1000;
+	transition: top 0.2s ease;
+}
+.skip-link:focus {
+	top: 1rem;
+}
+main:focus {
+	outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skip-link {
+		transition: none;
+	}
+}
+
 /* ============================================================
    Atmospheric background. Fixed, sits behind everything.
    ============================================================ */

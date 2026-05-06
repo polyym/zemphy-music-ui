@@ -9,8 +9,9 @@ on:
   # Sanity webhook -> repository_dispatch -> this workflow -> Netlify CLI
   # upload. The polyym deploy model intentionally bypasses Netlify's own
   # auto-build path so a content publish runs through the same lint and
-  # type-check gates as a code change. Wiring details live outside the repo
-  # in ../SETUP.md (kept private since this repo is public).
+  # type-check gates as a code change. Wiring details (the webhook URL, the
+  # GitHub PAT, the Netlify site ID and auth token) are kept private since
+  # this repo is public.
   repository_dispatch:
     types: [sanity-publish]
 
@@ -31,7 +32,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --no-audit --no-fund
+      # Mirror the full tests.yml gate set inline so this workflow does not
+      # rely on tests.yml having passed in parallel — branch protection makes
+      # that the usual case but it is one configuration switch away from a
+      # broken artefact getting deployed.
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm test
+      - run: npm run check
       - run: npm run build
         env:
           PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}

@@ -5,7 +5,9 @@ import {
 	SPARKLE_VISIBLE_MS,
 	SONGS_PER_PAGE,
 	TESTIMONIALS_PER_PAGE,
-	POLYYM_GITHUB_URL
+	POLYYM_GITHUB_URL,
+	OG_IMAGE_WIDTH_PX,
+	OG_IMAGE_HEIGHT_PX
 } from './constants';
 
 describe('constants', () => {
@@ -31,5 +33,14 @@ describe('constants', () => {
 
 	it('POLYYM_GITHUB_URL is an https github.com URL', () => {
 		expect(POLYYM_GITHUB_URL).toMatch(/^https:\/\/github\.com\/[^/]+\/[^/]+$/);
+	});
+
+	it('OG image dimensions match the social-card 1.91:1 aspect target', () => {
+		const ratio = OG_IMAGE_WIDTH_PX / OG_IMAGE_HEIGHT_PX;
+		// 1200/630 = 1.9047... — the canonical Open Graph dimensions, just
+		// inside the 1.9-1.92 band that Twitter/X and Facebook accept for
+		// summary_large_image without falling back to a basic summary card.
+		expect(ratio).toBeGreaterThan(1.9);
+		expect(ratio).toBeLessThan(1.92);
 	});
 });
