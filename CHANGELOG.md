@@ -8,11 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 _Nothing yet._
 
+## [1.1.2] - 2026-05-06
+
+CI-only follow-up to v1.1.1. The v1.1.1 commit landed on `main` but its `Tests` workflow run failed before the deploy step could fire, so the v1.1.1 hydration fix never reached production — the live site stayed on v1.1.0 with the home-page error overlay. v1.1.2 fixes the workflow so v1.1.1's `client.ts` change can finally deploy.
+
+Root cause: switching to `$env/static/public` in v1.1.1 shifted the env-var requirement earlier in the CI pipeline. `npm install`'s `prepare` hook runs `svelte-kit sync`, which generates the static-env ambient declarations in `.svelte-kit/ambient.d.ts` from `process.env` at sync time. Without `PUBLIC_SANITY_*` present at that point, sync emits an empty ambient declaration block, and `npm run lint` (typescript-eslint strict-type-checked) flags the `projectId` / `dataset` assignments in `client.ts` as `Unsafe assignment of an error typed value` and exits non-zero. The v1.1.1 workflow only set the env block on the `npm run build` step, which runs after lint — too late.
+
+### Fixed
+
+- [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) and [`.github/workflows/tests.yml`](.github/workflows/tests.yml): moved the `PUBLIC_SANITY_PROJECT_ID` / `PUBLIC_SANITY_DATASET` env block from the `npm run build` step up to job level. The vars are now visible to every step in the job, including `npm install`'s prepare hook. With sync seeing the env at install time, ambient declarations populate correctly, lint resolves the static-env imports as `string` instead of `error`, and the rest of the pipeline (test, check, build, deploy) proceeds. Both workflow files carry an explanatory comment so the next person doesn't consolidate the env back to step-level.
+- Verified locally by reproducing the exact CI failure: hide `.env`, wipe `.svelte-kit/`, run `npx svelte-kit sync && npm run lint` → `client.ts:22:2  error  Unsafe assignment of an error typed value` and same on line 23, matching the GHA log. Restoring `.env` and re-syncing makes lint clean.
+
 ## [1.1.1] - 2026-05-06
 
 Hotfix for the home-page hydration crash that surfaced once v1.1.0 deployed. The site loaded, Sanity images rendered into the prerendered HTML, then the client-side bundle threw on hydration and the SvelteKit error boundary took over the page with a "500 Something went wrong" overlay (the 500 is the boundary's own status text, not the HTTP response — the document itself was 200).
 
 Root cause: [`src/lib/sanity/client.ts`](src/lib/sanity/client.ts) imported `env` from `$env/dynamic/public`, which is read at runtime via the `_app/env.js` endpoint. On this Netlify deploy that endpoint returns `export const env={}` because the project's `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` are set in GitHub Actions Variables (build-time) but not in Netlify's runtime environment configuration. v1.0.1 didn't trip on this because `+page.svelte` didn't directly import the Sanity image builder; only About / Testimonials did, and their chunks weren't loaded when those sections weren't published. v1.1.0 added an `imageUrl` import to `+page.svelte` for the new `socialImage` URL building, which dragged `client.ts` into the home-page critical hydration chunk and exposed the latent issue.
+
+This commit landed on `main` but its `Tests` workflow run failed before the deploy step could fire, so the change did not reach production until v1.1.2 patched the CI workflow. See [1.1.2] above.
 
 ### Fixed
 
@@ -125,7 +138,8 @@ First production release. The codebase passes the polyym §18 definition-of-done
 - `README.md` — project overview, stack, structure, load-bearing conventions, scripts.
 - Operational runbook (deploy chain, webhook config, secrets, troubleshooting) and Studio content reference (first-fill copy-paste values) are kept private; not in the public repo.
 
-[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.1...HEAD
+[unreleased]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/polyym/zemphy-music-ui/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/polyym/zemphy-music-ui/compare/v1.0.0...v1.0.1

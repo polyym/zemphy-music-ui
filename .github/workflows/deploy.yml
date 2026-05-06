@@ -25,6 +25,18 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Job-level env so every step (including npm install's `prepare` hook,
+    # which runs `svelte-kit sync`) sees the Sanity vars. Sync uses them to
+    # generate the `$env/static/public` ambient declarations in
+    # `.svelte-kit/ambient.d.ts`; without those declarations the static-env
+    # imports in `src/lib/sanity/client.ts` resolve to `error`-typed values
+    # and `npm run lint` (typescript-eslint strict-type-checked) flags them
+    # as "Unsafe assignment of an error typed value" on the `projectId` /
+    # `dataset` fields. Step-level env on `npm run build` alone is not enough
+    # because lint/test/check run before build.
+    env:
+      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -41,9 +53,6 @@ jobs:
       - run: npm test
       - run: npm run check
       - run: npm run build
-        env:
-          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
-          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
 
       # `--no-build` tells netlify-cli to upload `build/` directly instead of
       # invoking @netlify/build (which would re-run `[build] command` from
