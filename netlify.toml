@@ -29,4 +29,12 @@
     # requires submission to hstspreload.org's removal form; commit only when
     # the production cert is stable and you intend to keep https-only.
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cdn.sanity.io; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    # `media-src` covers the inline voice sample on the about section: the
+    # audio file is loaded from `cdn.sanity.io` by the `<audio>` element.
+    # Without an explicit `media-src` the directive falls back to
+    # `default-src 'self'`, which would block the cross-origin audio in
+    # production (local `npm run preview` doesn't enforce these headers,
+    # so the gap only surfaces post-deploy — we got bitten by exactly
+    # this on v1.1.1's connect-src GROQ fetch). Image assets stay on the
+    # existing `img-src` allowance.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cdn.sanity.io; media-src 'self' https://cdn.sanity.io; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"

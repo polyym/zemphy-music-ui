@@ -266,4 +266,57 @@
 			opacity: 1;
 		}
 	}
+	/* Mobile hero polish: drop the bordered horizontal rules from the
+	   eyebrow (they wrap to their own line at 375px and the design intent
+	   only reads at desktop widths), let the kicker text breathe on a
+	   tighter two-line balance, slim the hero padding so the wordmark
+	   doesn't push the CTAs past the fold, and demote the secondary CTA
+	   to a text link so the "BOOK A PERFORMANCE" primary path is
+	   unmistakable. The secondary still routes to #repertoire for
+	   keyboard / screen-reader users; only the visual weight changes. */
+	@media (max-width: 640px) {
+		.hero {
+			padding: 6rem 1.5rem 3rem;
+		}
+		.hero-kicker {
+			gap: 0;
+			font-size: 0.7rem;
+			letter-spacing: 0.32em;
+			margin-bottom: 1.6rem;
+			text-wrap: balance;
+			max-width: 18rem;
+			justify-content: center;
+			text-align: center;
+		}
+		.hero-kicker::before,
+		.hero-kicker::after {
+			display: none;
+		}
+		.hero-tagline {
+			margin: 1rem auto 2rem;
+		}
+		.hero-cta-row {
+			flex-direction: column;
+			gap: 0.5rem;
+			align-items: center;
+		}
+		.hero-cta-row :global(.btn-ghost) {
+			background: none;
+			border: none;
+			backdrop-filter: none;
+			padding: 0.4rem 1rem;
+			font-size: 0.78rem;
+			letter-spacing: 0.18em;
+			color: var(--plum-soft);
+			text-decoration: underline;
+			text-underline-offset: 6px;
+			text-decoration-color: rgba(93, 72, 113, 0.3);
+			text-decoration-thickness: 1px;
+		}
+		.hero-cta-row :global(.btn-ghost:hover) {
+			color: var(--plum);
+			background: none;
+			text-decoration-color: var(--plum);
+		}
+	}
 </style>

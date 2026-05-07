@@ -65,6 +65,21 @@ export const aboutSection = defineType({
 			title: 'Badge established line',
 			description: 'Small caps line on the badge (e.g. EST. 2013).',
 			type: 'string'
+		}),
+		defineField({
+			name: 'audioPreview',
+			title: 'Voice sample (optional)',
+			description:
+				'Short audio file (MP3/M4A/AAC/OGG, ideally under 30 seconds) that plays inline below the about copy. Leave empty to omit the player.',
+			type: 'file',
+			options: { accept: 'audio/*' }
+		}),
+		defineField({
+			name: 'audioPreviewLabel',
+			title: 'Voice sample label (optional)',
+			description:
+				'Italic caption next to the play button (e.g. "A taste of my voice"). Leave empty to render the play button on its own.',
+			type: 'string'
 		})
 	],
 	preview: {

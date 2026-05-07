@@ -149,4 +149,24 @@
 			padding: 1rem 1.5rem;
 		}
 	}
+	/* Phones get a real translucent bar with a blurred backdrop. The
+	   floating-corners design works on desktop because there's enough
+	   horizontal room between the wordmark and the CTA for the body to
+	   scroll cleanly between them. On 375px viewports the two corners
+	   sit close enough that body text scrolling underneath constantly
+	   overlaps the brand and the CTA — particularly bad on the dark
+	   plum booking section, where the wordmark fades into the
+	   background entirely. The bar gets a subtle ivory wash + blur on
+	   mobile only, and `pointer-events: auto` so taps don't pass
+	   through the visible chrome. */
+	@media (max-width: 640px) {
+		nav {
+			pointer-events: auto;
+			background: rgba(251, 246, 239, 0.78);
+			backdrop-filter: blur(14px) saturate(160%);
+			-webkit-backdrop-filter: blur(14px) saturate(160%);
+			border-bottom: 1px solid rgba(193, 174, 224, 0.25);
+			padding: 0.85rem 1.25rem;
+		}
+	}
 </style>

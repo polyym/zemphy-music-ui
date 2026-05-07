@@ -46,7 +46,27 @@ export function sparkles(node: HTMLElement) {
 
 	function addSparkle() {
 		if (!win) return;
-		const size = SPARKLE_MIN_SIZE_PX + Math.random() * SPARKLE_SIZE_VARIANCE_PX;
+		// Skip spawning entirely when the visitor prefers reduced motion.
+		// The static hero `<svg class="sparkle">` elements already have
+		// their `twinkle` animation neutralised by the matching CSS media
+		// rule in `app.css`; the dynamic spawner sets inline transform /
+		// opacity / filter values that bypass scoped CSS, so it has to
+		// gate itself in JS. Re-checked per spawn so the page reacts if
+		// the OS-level preference flips at runtime.
+		if (
+			typeof win.matchMedia === 'function' &&
+			win.matchMedia('(prefers-reduced-motion: reduce)').matches
+		) {
+			return;
+		}
+		// At <= 640px the desktop sparkle sizes (peak ~22px * scale(2) = 44px
+		// at the visual apex) compete with the typography for attention on a
+		// 375px viewport. Halving the size factor on mobile keeps the
+		// shimmer effect without crowding the layout. Read viewport width
+		// per spawn so the user can rotate or resize and the next sparkle
+		// adopts the new size class.
+		const sizeFactor = win.innerWidth <= 640 ? 0.55 : 1;
+		const size = (SPARKLE_MIN_SIZE_PX + Math.random() * SPARKLE_SIZE_VARIANCE_PX) * sizeFactor;
 		const startRotation = Math.random() * 90;
 
 		let x = 0;

@@ -19,10 +19,18 @@ import {
 // are fetched in full and paginated client-side in the Repertoire component
 // (page size lives in `$lib/constants`). Pre-paginating server-side would
 // drop later songs from the bundle and break the prev/next controls.
+//
+// The aboutSection projection expands `audioPreview` from a Sanity file
+// reference into `{ url, mimeType }` so the home page can play it inline
+// without making a follow-up runtime fetch. The `...` spread keeps every
+// other field as-is; the explicit projection only overrides `audioPreview`.
 const HOME_QUERY = `{
 	"siteSettings": *[_type == "siteSettings"][0],
 	"heroSection": *[_type == "heroSection"][0],
-	"aboutSection": *[_type == "aboutSection"][0],
+	"aboutSection": *[_type == "aboutSection"][0]{
+		...,
+		"audioPreview": audioPreview.asset->{ url, mimeType }
+	},
 	"servicesSection": *[_type == "servicesSection"][0],
 	"repertoireSection": *[_type == "repertoireSection"][0],
 	"testimonialsSection": *[_type == "testimonialsSection"][0],

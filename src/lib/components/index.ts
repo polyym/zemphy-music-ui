@@ -8,4 +8,5 @@ export { default as Nav } from './nav.svelte';
 export { default as Repertoire } from './repertoire.svelte';
 export { default as Services } from './services.svelte';
 export { default as SideNav } from './side-nav.svelte';
+export { default as StickyCta } from './sticky-cta.svelte';
 export { default as Testimonials } from './testimonials.svelte';

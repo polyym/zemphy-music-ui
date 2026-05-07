@@ -206,4 +206,24 @@
 			margin-right: 1rem;
 		}
 	}
+	/* Mobile booking polish: drop the Instagram and YouTube pills entirely.
+	   The two socials are already reachable from the top-nav icons on every
+	   page; rendering them again here as duplicate pills (or as the earlier
+	   demoted text-link variant) just clutters the conversion path on small
+	   screens. Only "SEND AN ENQUIRY" — the action this section exists to
+	   funnel toward — remains. The underlying anchors stay in the DOM in
+	   the markup; CSS hides them at this breakpoint. Tablet and desktop
+	   keep the full three-pill row. */
+	@media (max-width: 640px) {
+		.booking-cta {
+			flex-direction: column;
+			gap: 0.6rem;
+		}
+		.booking :global(.btn-ghost) {
+			display: none;
+		}
+		.contact-info {
+			margin-top: 2.5rem;
+		}
+	}
 </style>

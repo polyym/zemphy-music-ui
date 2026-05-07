@@ -40,6 +40,16 @@ export interface HeroSection {
 	secondaryCtaLabel?: string;
 }
 
+/**
+ * Shape of a Sanity file asset after the GROQ query has expanded the asset
+ * reference (`audioPreview.asset->{ url, mimeType }`). Optional fields all the
+ * way down because the upstream `audioPreview` field is itself optional.
+ */
+export interface SanityResolvedFile {
+	url?: string;
+	mimeType?: string;
+}
+
 export interface AboutSection {
 	eyebrowLabel?: string;
 	heading?: string;
@@ -49,6 +59,8 @@ export interface AboutSection {
 	badgeLine1?: string;
 	badgeLine2?: string;
 	badgeEstablished?: string;
+	audioPreview?: SanityResolvedFile;
+	audioPreviewLabel?: string;
 }
 
 export interface ServicesSection {

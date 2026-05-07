@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { SideNavLabels } from '$lib/sanity/types';
 
 	let { labels }: { labels?: SideNavLabels } = $props();
@@ -19,14 +20,28 @@
 
 	onMount(() => {
 		// rootMargin shrinks the trigger zone to the central ~20% of the viewport
-		// so the active dot updates feel intentional rather than flickery.
+		// so the active dot updates feel intentional rather than flickery. We
+		// keep an intersecting-set rather than just latching the last
+		// intersecting entry: when the user scrolls back above all observed
+		// sections (e.g. up to the hero), the previous "intersecting only"
+		// implementation would leave the last-seen section's dot stuck active.
+		// Tracking the live set lets us clear `activeId` when nothing is in
+		// the trigger zone, and pick the topmost section when several are.
+		const intersecting = new SvelteSet<string>();
 		const observer = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
 					if (entry.isIntersecting) {
-						activeId = entry.target.id;
+						intersecting.add(entry.target.id);
+					} else {
+						intersecting.delete(entry.target.id);
 					}
 				}
+				// Pick the section that appears earliest in `items` (matches
+				// document order) so the dot moves predictably as the user
+				// scrolls, rather than flipping to whichever entry fired last.
+				const ordered = items.find((item) => intersecting.has(item.id));
+				activeId = ordered?.id;
 			},
 			{ rootMargin: '-40% 0px -40% 0px', threshold: 0 }
 		);

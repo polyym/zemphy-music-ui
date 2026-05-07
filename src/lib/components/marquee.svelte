@@ -71,4 +71,15 @@
 			animation: none;
 		}
 	}
+	/* Hidden on phones. The marquee's value on desktop is showing 6+ keywords
+	   sliding past at once to convey breadth-of-services at a glance; at
+	   375px wide only ~1.5 keywords fit on screen at any moment, so the
+	   message degrades to a slow drift of single words. The services grid
+	   below already enumerates every category, so dropping the marquee on
+	   mobile saves vertical real estate without losing information. */
+	@media (max-width: 640px) {
+		.marquee {
+			display: none;
+		}
+	}
 </style>

@@ -175,6 +175,12 @@
 html {
 	scroll-behavior: smooth;
 	-webkit-text-size-adjust: 100%;
+	/* Pair with body's overflow-x: hidden below. iOS Safari sometimes lets
+	   horizontal overflow escape past a body-level clip; setting it on the
+	   html root too closes that gap. The marquee track is the main element
+	   that legitimately overflows its container — it's clipped by `.marquee
+	   { overflow: hidden }` already, but defensive at the document root. */
+	overflow-x: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -286,6 +292,20 @@ main:focus {
 	animation: twinkle 3.5s ease-in-out infinite;
 	filter: drop-shadow(0 0 4px rgba(255, 250, 235, 1)) drop-shadow(0 0 14px rgba(232, 215, 175, 0.7));
 }
+/* Static hero sparkles vary 12-28px on desktop. At 375px the larger ones feel
+   busy — shrinking them all to 14px on mobile preserves the decorative
+   shimmer while letting the typography breathe. The CSS width/height
+   overrides the inline SVG attributes for modern browsers without
+   `!important`. The drop-shadow halo also tightens so the visual extent
+   shrinks proportionally. */
+@media (max-width: 640px) {
+	.sparkle {
+		width: 14px;
+		height: 14px;
+		filter: drop-shadow(0 0 2px rgba(255, 250, 235, 1))
+			drop-shadow(0 0 8px rgba(232, 215, 175, 0.7));
+	}
+}
 
 .blob {
 	position: absolute;
@@ -355,6 +375,29 @@ section {
 @media (max-width: 900px) {
 	section {
 		padding: 4rem 1.5rem;
+	}
+}
+
+/* Phones get a tighter vertical rhythm. The 4rem top/bottom inside a
+   section combined with the components' own internal margins (about
+   gap, repertoire margin, testimonials margin-top, booking margin)
+   adds up to noticeably empty section transitions on a 375px viewport.
+   Pulling section padding to 2.5rem and the title bottom-margin
+   to 1.5rem tightens the overall mobile scroll without crowding any
+   single block. The body padding-bottom reserves clearance for the
+   sticky CTA pill (see `sticky-cta.svelte`) so the last line of any
+   section isn't permanently hidden behind it; the CTA hides itself
+   when `#booking` is on screen, but the reservation needs to apply
+   to every section above booking. */
+@media (max-width: 640px) {
+	section {
+		padding: 2.5rem 1.25rem;
+	}
+	.section-title {
+		margin-bottom: 1.5rem;
+	}
+	body {
+		padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
 	}
 }
 

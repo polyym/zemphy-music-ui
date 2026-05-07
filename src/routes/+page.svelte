@@ -10,6 +10,7 @@
 		Repertoire,
 		Services,
 		SideNav,
+		StickyCta,
 		Testimonials
 	} from '$lib/components';
 	import { OG_IMAGE_HEIGHT_PX, OG_IMAGE_WIDTH_PX, SITE_URL } from '$lib/constants';
@@ -140,4 +141,5 @@
 	</main>
 
 	<Footer logoName={settings?.logoName} footerTagline={settings?.footerTagline} />
+	<StickyCta ctaLabel={settings?.navCtaLabel} ctaHref="#booking" />
 </div>

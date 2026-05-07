@@ -374,31 +374,27 @@
 		}
 	}
 
+	/* Tablet (641-900px) keeps the desktop's two-cards-per-page side-by-side
+	   layout but drops the arrow gutter (arrows hide; dots + swipe are
+	   enough). Phones (<= 640px) collapse each page to a single column so
+	   the two cards stack vertically within the scroll-snap page. The track
+	   itself stays horizontal scroll-snap at every viewport — without that
+	   the carousel pagination breaks (was a vertical stack of every card on
+	   mobile in v1.1.3, which surfaced "more than two reviews" at once and
+	   broke parity with the desktop UX). */
 	@media (max-width: 900px) {
-		/* Mobile collapses the carousel into a plain vertical stack — single
-		   column, all cards visible, no swiping. Arrows and dots both hidden;
-		   nothing to navigate to. Drop the desktop's arrow-gutter padding so
-		   the cards reclaim the full width on small screens. */
 		.testimonials-carousel {
 			margin-top: 3rem;
 			padding: 0;
 		}
-		.testimonials-track {
-			flex-direction: column;
-			overflow-x: visible;
-			overflow-y: visible;
-			scroll-snap-type: none;
-			gap: 2rem;
-			padding: 0;
-			margin: 0;
-		}
-		.testimonials-page {
-			flex: 1 1 auto;
-			grid-template-columns: 1fr;
-		}
-		.arrow,
-		.testimonials-dots {
+		.arrow {
 			display: none;
+		}
+	}
+	@media (max-width: 640px) {
+		.testimonials-page {
+			grid-template-columns: 1fr;
+			gap: 1.5rem;
 		}
 	}
 </style>
