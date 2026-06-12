@@ -5,16 +5,14 @@
 [build.environment]
   NODE_VERSION = "22.22.2"
 
-# Sanity Studio at /studio/* needs a relaxed CSP: unsafe-eval for its codegen,
-# Sanity API origins for connect/img, and blob: for its web workers and inline
-# scripts. The public site below stays strict; only the editor route is loose.
-[[headers]]
-  for = "/studio/*"
-  [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data: https://cdn.sanity.io https://*.sanity.io; connect-src 'self' https://api.sanity.io https://*.api.sanity.io https://*.apicdn.sanity.io https://api.sanity.work wss://*.api.sanity.io; frame-src 'self' https://*.sanity.io https://core.sanity-cdn.com; worker-src 'self' blob:; base-uri 'self'; form-action 'self'"
+# NOTE: /studio/* deliberately gets no headers block here. Netlify custom
+# headers only apply to responses served from the static store (prerendered
+# pages and assets); /studio opts out of prerendering, so its SPA shell is
+# served by the adapter's render function, which netlify.toml headers never
+# reach — a /studio block here is dead configuration. The Studio's relaxed
+# CSP, X-Frame-Options: SAMEORIGIN, and X-Robots-Tag: noindex ship from app
+# code instead: see src/hooks.server.ts. This file stays the source of truth
+# for everything static (the block below).
 
 [[headers]]
   for = "/*"

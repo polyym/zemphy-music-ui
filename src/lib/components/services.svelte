@@ -35,9 +35,9 @@
 
 	function toggle(i: number) {
 		// Toggling is a no-op above 640px since the CSS shows every body
-		// regardless. Skipping the state mutation here keeps `aria-expanded`
-		// reflecting reality (true for every card on desktop) rather than
-		// flickering as the user clicks.
+		// regardless. The `!isMobile || ...` in the aria-expanded binding keeps
+		// the attribute true for every card on desktop, matching what's
+		// actually visible.
 		if (!isMobile) return;
 		expandedIndex = expandedIndex === i ? undefined : i;
 	}
@@ -62,7 +62,7 @@
 							<button
 								class="service-summary"
 								type="button"
-								aria-expanded={expandedIndex === i}
+								aria-expanded={!isMobile || expandedIndex === i}
 								aria-controls="service-body-{i}"
 								onclick={() => {
 									toggle(i);

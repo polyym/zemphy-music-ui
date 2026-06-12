@@ -18,16 +18,16 @@ Dev server runs at <http://localhost:5173>. Studio is at <http://localhost:5173/
 
 ## Stack
 
-| Layer         | Choice                                                                                    |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| Framework     | SvelteKit 2, Svelte 5 in runes mode                                                       |
-| Language      | TypeScript (`strict: true`)                                                               |
-| CMS           | Sanity (project `project_id`, dataset `production`); Studio embedded as a `/studio` route |
-| Adapter       | `@sveltejs/adapter-netlify` (`edge: false`, `split: false`)                               |
-| Hosting       | Netlify (static assets + one Function serving the `/studio/*` SPA shell)                  |
-| CI and deploy | GitHub Actions builds; Netlify CLI uploads. No Netlify auto-build.                        |
-| Tests         | Vitest                                                                                    |
-| Lint / format | ESLint flat config, Prettier, Husky pre-commit                                            |
+| Layer         | Choice                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------- |
+| Framework     | SvelteKit 2, Svelte 5 in runes mode                                                     |
+| Language      | TypeScript (`strict: true`)                                                             |
+| CMS           | Sanity (project `5b75k1rw`, dataset `production`); Studio embedded as a `/studio` route |
+| Adapter       | `@sveltejs/adapter-netlify` (`edge: false`, `split: false`)                             |
+| Hosting       | Netlify (static assets + one Function serving the `/studio/*` SPA shell)                |
+| CI and deploy | GitHub Actions builds; Netlify CLI uploads. No Netlify auto-build.                      |
+| Tests         | Vitest                                                                                  |
+| Lint / format | ESLint flat config, Prettier, Husky pre-commit                                          |
 
 ## Project structure
 
@@ -47,10 +47,13 @@ src/
 │   ├── constants.ts        # SITE_URL, POLYYM_GITHUB_URL, page sizes, OG image dimensions, sparkle timings
 │   ├── constants.test.ts
 │   ├── marked-text.ts      # `*foo*` -> <em>, `\n` -> <br>, blank line -> paragraph
-│   └── marked-text.test.ts
+│   ├── marked-text.test.ts
+│   ├── paginate.ts         # pure pagination helpers: chunk, pageCount, clampPage, pageSlice
+│   └── paginate.test.ts
+├── hooks.server.ts         # headers for function-served routes: /studio CSP + noindex
 └── routes/
     ├── +layout.{svelte,ts}             # prerender = true
-    ├── +page.{svelte,ts}               # single GROQ query, composes all sections
+    ├── +page.svelte, +page.server.ts   # single GROQ query (server-only load), composes all sections
     ├── +error.svelte
     ├── studio/
     │   ├── +layout.ts                  # prerender = false, ssr = false
@@ -58,7 +61,7 @@ src/
     │   └── [...slug]/+page.svelte      # catchall for Studio's internal routes
     └── sitemap.xml/+server.ts
 
-netlify.toml                            # per-path CSP: strict for /, permissive for /studio/*
+netlify.toml                            # static-content headers: strict CSP + HSTS (studio headers live in hooks.server.ts)
 sanity.config.ts                        # Studio config, structure tool, singleton lock-down
 .github/workflows/{tests,deploy}.yml
 ```
@@ -72,7 +75,7 @@ A few things that are deliberately the way they are; changing them needs a wider
 - **GHA-driven deploys.** Netlify auto-build is intentionally unused; GitHub Actions builds the artefact and pushes it via Netlify CLI. A Sanity webhook fires `repository_dispatch` on publish so content changes go through the same lint, type-check, and test gates as a code change.
 - **Songs and testimonials paginate.** Songs use prev/next buttons (12 per page); testimonials use a horizontal scroll-snap carousel (2 per page) with side prev/next arrows in dedicated 4rem gutters and click-to-jump dots below. Both layouts fall back to single-column stacks below 900px viewport.
 - **Singletons are locked.** The Studio structure tool pins the seven singletons at the top, and document actions strip create / delete / duplicate / unpublish so editors can't accidentally orphan them.
-- **Per-path CSP plus HSTS.** The public site's CSP is strict (no `unsafe-eval`, no third-party origins beyond Sanity's image CDN); `/studio/*` relaxes it to what Sanity Studio actually needs. `Strict-Transport-Security` is sent on every response with `includeSubDomains` and `preload`, so the domain is committed to HTTPS — backing out later requires the [hstspreload.org removal form](https://hstspreload.org/removal/). All security headers live in [`netlify.toml`](netlify.toml).
+- **Two-tier CSP plus HSTS, shipped through two mechanisms.** The public site's CSP is strict (no `unsafe-eval`, no third-party origins beyond Sanity's image CDN) and lives in [`netlify.toml`](netlify.toml) — but Netlify custom headers only reach static responses, and `/studio/*` is served by the adapter's render function, so the Studio's relaxed CSP, `X-Frame-Options`, and `X-Robots-Tag: noindex` ship from app code in [`hooks.server.ts`](src/hooks.server.ts). Both layers are required. `Strict-Transport-Security` is sent on every response with `includeSubDomains` and `preload`, so the domain is committed to HTTPS — backing out later requires the [hstspreload.org removal form](https://hstspreload.org/removal/).
 - **Self-hosted fonts.** Fraunces and Manrope (variable woff2) live under `static/fonts/`, with the `unicode-range` subset matrix preserved from Google Fonts so browsers fetch only what they need.
 
 ## Scripts

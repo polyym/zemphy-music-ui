@@ -41,7 +41,6 @@
 	}
 	.marquee-track {
 		display: flex;
-		gap: 3rem;
 		animation: scroll 45s linear infinite;
 		white-space: nowrap;
 		font-family: var(--serif);
@@ -54,6 +53,12 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 3rem;
+		/* The inter-copy spacing lives inside each copy (not as a flex gap on
+		   the track) so each copy is exactly half the track width and the -50%
+		   translate loops seamlessly. A track-level gap would add 3rem to the
+		   total width but only 1.5rem to the -50% shift, producing a visible
+		   1.5rem jump at the end of every 45s cycle. */
+		padding-right: 3rem;
 	}
 	.marquee-track .dot {
 		width: 6px;

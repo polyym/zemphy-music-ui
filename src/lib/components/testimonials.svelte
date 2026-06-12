@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { reveal } from '$lib/actions/reveal';
 	import { TESTIMONIALS_PER_PAGE } from '$lib/constants';
+	import { chunk } from '$lib/paginate';
 	import { imageUrl } from '$lib/sanity/image';
 	import type { Testimonial, TestimonialsSection } from '$lib/sanity/types';
 	import MarkedText from './marked-text.svelte';
@@ -16,14 +17,7 @@
 	let trackEl: HTMLDivElement | undefined = $state();
 	let activePage = $state(0);
 
-	const pages = $derived.by((): Testimonial[][] => {
-		if (!testimonials || testimonials.length === 0) return [];
-		const result: Testimonial[][] = [];
-		for (let i = 0; i < testimonials.length; i += TESTIMONIALS_PER_PAGE) {
-			result.push(testimonials.slice(i, i + TESTIMONIALS_PER_PAGE));
-		}
-		return result;
-	});
+	const pages = $derived(testimonials ? chunk(testimonials, TESTIMONIALS_PER_PAGE) : []);
 	const totalPages = $derived(pages.length);
 	const pageIndices = $derived.by(() => {
 		const indices: number[] = [];
@@ -33,7 +27,14 @@
 
 	function avatarStyle(testimonial: Testimonial): string {
 		if (!testimonial.avatarImage) return '';
-		const url = imageUrl(testimonial.avatarImage).width(96).height(96).fit('crop').url();
+		// auto('format') lets Sanity's CDN serve AVIF/WebP to browsers whose
+		// Accept header allows it; others get the original format.
+		const url = imageUrl(testimonial.avatarImage)
+			.width(96)
+			.height(96)
+			.fit('crop')
+			.auto('format')
+			.url();
 		return `background-image: url('${url}');`;
 	}
 

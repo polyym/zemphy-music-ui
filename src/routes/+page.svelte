@@ -65,7 +65,10 @@
 	// Open Graph / Twitter card image. Twitter rejects `summary_large_image`
 	// when no image is provided, so the card type degrades to `summary` when
 	// the CMS field is empty. The OG_IMAGE_*_PX constants match the canonical
-	// 1.91:1 social-card aspect; see `src/lib/constants.ts`.
+	// 1.91:1 social-card aspect; see `src/lib/constants.ts`. Deliberately no
+	// `auto('format')` here: link-preview scrapers are less dependable than
+	// browsers about Accept-header negotiation, so the original format is the
+	// safer choice for og:image.
 	const socialImageUrl = $derived(
 		settings?.socialImage
 			? imageUrl(settings.socialImage)

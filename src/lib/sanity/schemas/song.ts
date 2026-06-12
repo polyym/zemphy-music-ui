@@ -3,8 +3,8 @@ import { defineField, defineType } from 'sanity';
 /**
  * One row in the songbook. Year is the last two digits (e.g. 96 for 1996); the
  * renderer adds the leading apostrophe. Both version links are optional; the
- * row stays non-interactive when neither is set. The home page slices the
- * collection to the first 12 by `order` ascending.
+ * row stays non-interactive when neither is set. The home page paginates the
+ * collection by `order` ascending, 12 songs per page (prev/next controls).
  */
 export const song = defineType({
 	name: 'song',
@@ -50,7 +50,7 @@ export const song = defineType({
 			name: 'order',
 			title: 'Order',
 			description:
-				'Lower numbers appear first. Only the first 12 by order surface on the home page.',
+				'Lower numbers appear first. The home page paginates songs in this order, 12 per page.',
 			type: 'number',
 			validation: (rule) => rule.required().integer().min(0)
 		})

@@ -1,7 +1,10 @@
 User-agent: *
 Allow: /
 
-Disallow: /studio
-Disallow: /studio/
+# /studio is deliberately NOT disallowed here. A robots.txt block stops
+# crawlers from ever fetching the page, which also hides the
+# X-Robots-Tag: noindex header set in netlify.toml — and a blocked URL can
+# still be indexed from external links alone. Crawl-and-noindex is Google's
+# documented pattern for keeping a page out of search results.
 
 Sitemap: https://zemphy.music/sitemap.xml

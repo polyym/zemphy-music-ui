@@ -13,8 +13,8 @@ import { PUBLIC_SANITY_DATASET, PUBLIC_SANITY_PROJECT_ID } from '$env/static/pub
 // hydration and the SvelteKit error boundary takes over the rendered page.
 
 /**
- * Build-time Sanity client. Used from `+page.ts` load functions to fetch
- * content via GROQ during prerendering. `useCdn: false` ensures the build
+ * Build-time Sanity client. Used from the server-only `+page.server.ts` load
+ * to fetch content via GROQ during prerendering. `useCdn: false` ensures the build
  * always sees the latest published documents; the resulting HTML is what
  * gets cached at the edge.
  */

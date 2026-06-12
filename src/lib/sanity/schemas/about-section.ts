@@ -43,6 +43,13 @@ export const aboutSection = defineType({
 			options: { hotspot: true }
 		}),
 		defineField({
+			name: 'portraitAlt',
+			title: 'Portrait alt text',
+			description:
+				'One short sentence describing the portrait for screen readers and search engines (e.g. "Zemphy singing at a candlelit wedding"). Leave empty to treat the image as decorative.',
+			type: 'string'
+		}),
+		defineField({
 			name: 'signature',
 			title: 'Signature line',
 			description: 'Italic sign-off below the body.',

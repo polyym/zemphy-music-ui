@@ -7,15 +7,21 @@ import {
 	SPARKLE_SIZE_VARIANCE_PX
 } from '$lib/constants';
 
-const SPARKLE_SVG = (size: number): string =>
+const SPARKLE_SVG = (size: number, gradientId: string): string =>
 	`<svg width="${String(size)}" height="${String(size)}" viewBox="0 0 24 24">` +
-	'<defs><radialGradient id="sg" cx="50%" cy="50%" r="50%">' +
+	`<defs><radialGradient id="${gradientId}" cx="50%" cy="50%" r="50%">` +
 	'<stop offset="0%" stop-color="#fffaee"/>' +
 	'<stop offset="45%" stop-color="#ede4cc"/>' +
 	'<stop offset="100%" stop-color="#a89e87"/>' +
 	'</radialGradient></defs>' +
-	'<path d="M12 0 L13.5 10.5 L24 12 L13.5 13.5 L12 24 L10.5 13.5 L0 12 L10.5 10.5 Z" fill="url(#sg)"/>' +
+	`<path d="M12 0 L13.5 10.5 L24 12 L13.5 13.5 L12 24 L10.5 13.5 L0 12 L10.5 10.5 Z" fill="url(#${gradientId})"/>` +
 	'</svg>';
+
+// Monotonic counter for per-sparkle gradient ids. Several sparkles coexist in
+// the DOM (spawned every 1.5s, alive ~3.3s), so a fixed id would duplicate
+// ids in the document — invalid HTML, even though `url(#...)` happens to
+// resolve to the first (identical) gradient.
+let nextSparkleId = 0;
 
 function isOverText(x: number, y: number, doc: Document): boolean {
 	const el = doc.elementFromPoint(x, y);
@@ -81,7 +87,8 @@ export function sparkles(node: HTMLElement) {
 		if (attempts >= SPARKLE_TEXT_RETRY_LIMIT) return;
 
 		const sparkle = doc.createElement('div');
-		sparkle.innerHTML = SPARKLE_SVG(size);
+		nextSparkleId += 1;
+		sparkle.innerHTML = SPARKLE_SVG(size, `sg-${String(nextSparkleId)}`);
 		sparkle.style.position = 'fixed';
 		sparkle.style.left = `${String(x)}px`;
 		sparkle.style.top = `${String(y)}px`;

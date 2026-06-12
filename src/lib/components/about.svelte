@@ -7,14 +7,32 @@
 
 	let { data }: { data?: AboutSection } = $props();
 
-	// Build the portrait CSS background-image inline so the design's pseudo-element
-	// warmth wash and bottom darkening (in this component's scoped CSS) layer
-	// over a CMS-driven asset URL without any of those styles being touched.
-	const portraitStyle = $derived(
-		data?.portraitImage
-			? `background-image: url('${imageUrl(data.portraitImage).width(900).height(1125).fit('crop').url()}');`
-			: ''
-	);
+	// Responsive portrait sources. A real <img> (rather than the previous CSS
+	// background-image) so the portrait carries CMS-driven alt text and the
+	// browser picks an appropriately sized crop per viewport via `srcset` /
+	// `sizes`. All crops are 4:5; `auto('format')` lets Sanity's CDN answer
+	// with AVIF/WebP when the browser's Accept header allows it. The scoped
+	// warmth-wash pseudo-elements on `.portrait` are absolutely positioned,
+	// so they still paint above the in-flow <img>.
+	const PORTRAIT_WIDTHS = [480, 720, 960, 1200];
+	function portraitUrl(image: NonNullable<AboutSection['portraitImage']>, width: number): string {
+		return imageUrl(image)
+			.width(width)
+			.height(Math.round(width * 1.25))
+			.fit('crop')
+			.auto('format')
+			.url();
+	}
+	const portraitSrc = $derived.by(() => {
+		const image = data?.portraitImage;
+		if (!image) return;
+		return portraitUrl(image, 960);
+	});
+	const portraitSrcset = $derived.by(() => {
+		const image = data?.portraitImage;
+		if (!image) return;
+		return PORTRAIT_WIDTHS.map((w) => `${portraitUrl(image, w)} ${String(w)}w`).join(', ');
+	});
 
 	// Optional inline audio sample. The CMS field is a Sanity file asset that
 	// the page-level GROQ projection has already resolved into `{ url,
@@ -136,7 +154,19 @@
 	<section id="about" class="reveal" use:reveal>
 		<div class="about">
 			<div class="portrait-wrap">
-				<div class="portrait" style={portraitStyle}></div>
+				<div class="portrait">
+					{#if portraitSrc}
+						<img
+							class="portrait-img"
+							src={portraitSrc}
+							srcset={portraitSrcset}
+							sizes="(max-width: 640px) calc(100vw - 2.5rem), (max-width: 900px) 40vw, 540px"
+							alt={data.portraitAlt ?? ''}
+							loading="lazy"
+							decoding="async"
+						/>
+					{/if}
+				</div>
 				{#if data.badgeLine1 ?? data.badgeLine2 ?? data.badgeEstablished}
 					<div class="portrait-badge">
 						{#if data.badgeLine1}{data.badgeLine1}<br />{/if}
@@ -216,16 +246,24 @@
 		aspect-ratio: 4 / 5;
 		border-radius: 240px 240px 12px 12px;
 		background-color: var(--pastel-lilac);
-		background-size: cover;
-		background-position: center 25%;
 		box-shadow:
 			0 30px 80px -20px rgba(61, 43, 78, 0.25),
 			0 0 0 1px rgba(255, 255, 255, 0.4) inset;
 		position: relative;
 		overflow: hidden;
 	}
-	/* Warmth wash overlay; pseudo-element so swapping the inline background-image
-	   from CMS leaves this gradient untouched. */
+	.portrait-img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		/* Mirrors the old `background-position: center 25%` so existing
+		   portraits keep the same framing; Sanity's hotspot (when set)
+		   already steers the server-side crop. */
+		object-position: center 25%;
+	}
+	/* Warmth wash overlay; the pseudo-elements are absolutely positioned so
+	   they paint above the in-flow <img> without extra z-index management. */
 	.portrait::before {
 		content: '';
 		position: absolute;
@@ -310,8 +348,9 @@
 	   italic-serif label sits to its right, and an equalizer animation
 	   fills whatever empty space remains while audio is playing. Player
 	   only renders when the CMS has an audio asset, so this CSS is
-	   dead-loaded otherwise. Sized for a comfortable tap target on mobile
-	   (>= 44x44 per WCAG 2.5.8). */
+	   dead-loaded otherwise. Sized for a comfortable tap target on mobile:
+	   44x44, the Apple HIG floor, comfortably above WCAG 2.5.8's 24x24
+	   minimum. */
 	.audio-sample {
 		display: flex;
 		align-items: center;

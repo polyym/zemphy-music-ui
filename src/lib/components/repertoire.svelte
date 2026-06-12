@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { reveal } from '$lib/actions/reveal';
 	import { SONGS_PER_PAGE } from '$lib/constants';
+	import { clampPage, pageCount, pageSlice } from '$lib/paginate';
 	import type { RepertoireSection, Song } from '$lib/sanity/types';
 	import MarkedText from './marked-text.svelte';
 
@@ -41,7 +42,7 @@
 	});
 
 	const totalSongs = $derived(songs?.length ?? 0);
-	const totalPages = $derived(Math.max(1, Math.ceil(totalSongs / SONGS_PER_PAGE)));
+	const totalPages = $derived(pageCount(totalSongs, SONGS_PER_PAGE));
 	const visibleSongs = $derived.by(() => {
 		if (!songs || songs.length === 0) return [];
 		// Mobile teaser: always the first N songs of the whole songbook,
@@ -51,7 +52,7 @@
 		if (isMobile && !expanded) {
 			return songs.slice(0, MOBILE_TEASER_COUNT);
 		}
-		return songs.slice((currentPage - 1) * SONGS_PER_PAGE, currentPage * SONGS_PER_PAGE);
+		return pageSlice(songs, currentPage, SONGS_PER_PAGE);
 	});
 
 	// Clamp page when the song list shrinks (editor deletes songs in Studio).
@@ -66,7 +67,7 @@
 	}
 
 	function goToPage(page: number) {
-		currentPage = Math.max(1, Math.min(totalPages, page));
+		currentPage = clampPage(page, totalPages);
 	}
 
 	function toggle() {
@@ -201,7 +202,10 @@
 								</svg>
 								<span>Previous</span>
 							</button>
-							<span class="indicator" aria-current="page">Page {currentPage} of {totalPages}</span>
+							<!-- aria-live announces page changes to screen readers; aria-current
+								 would be a misuse here (it marks the current item within a set of
+								 navigation links, which this status text is not). -->
+							<span class="indicator" aria-live="polite">Page {currentPage} of {totalPages}</span>
 							<button
 								type="button"
 								onclick={() => {
@@ -579,10 +583,10 @@
 		   Tapping flips `expanded`, the `visibleSongs` derived swaps from
 		   `songs.slice(0, 3)` to the full paginated page, and the
 		   prev/next pagination row reveals via the matching CSS rule
-		   below. The button is a 44x44 hit area (WCAG 2.5.8) wrapping a
-		   28x28 visual chevron in a translucent ivory pill so it reads as
-		   interactive without competing with the songbook card's plum
-		   palette. */
+		   below. The button is a 44x44 hit area (the Apple HIG floor,
+		   above WCAG 2.5.8's 24x24 minimum) wrapping a 28x28 visual
+		   chevron in a translucent ivory pill so it reads as interactive
+		   without competing with the songbook card's plum palette. */
 		.repertoire-toggle {
 			display: flex;
 			align-items: center;
@@ -661,7 +665,8 @@
 		}
 		/* On mobile each version link becomes a proper round chip — 40x40
 		   visible button, with a pseudo-element extending the click target
-		   to clear WCAG 2.5.8's 44x44 minimum. The translucent ivory
+		   to 44x44 (the Apple HIG floor; WCAG 2.5.8's actual minimum is
+		   24x24). The translucent ivory
 		   background + tinted border makes the link read as tappable
 		   without hover affordance (which mobile lacks), and the larger
 		   16px icon is comfortably legible. The accessible name still comes

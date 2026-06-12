@@ -24,16 +24,23 @@ jobs:
     # and `npm run lint` (typescript-eslint strict-type-checked) flags them
     # as "Unsafe assignment of an error typed value" on the `projectId` /
     # `dataset` fields.
+    #
+    # The `||` fallbacks keep fork PRs green: GitHub passes neither secrets
+    # nor repository variables to `pull_request` runs from forks, so without
+    # them the Sanity vars arrive empty and lint fails as described above.
+    # The fallback values are public (they mirror `.env.example`).
     env:
-      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
-      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID || '5b75k1rw' }}
+      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET || 'production' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-      - run: npm install --no-audit --no-fund
+      # `npm ci` is lockfile-faithful: it fails loudly if package.json and
+      # package-lock.json drift, instead of silently rewriting the lock in CI.
+      - run: npm ci --no-audit --no-fund
       - run: npm run lint
       - run: npm run format:check
       - run: npm test

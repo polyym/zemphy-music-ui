@@ -34,16 +34,23 @@ jobs:
     # as "Unsafe assignment of an error typed value" on the `projectId` /
     # `dataset` fields. Step-level env on `npm run build` alone is not enough
     # because lint/test/check run before build.
+    #
+    # The `||` fallbacks keep fork PRs green: GitHub passes neither secrets
+    # nor repository variables to `pull_request` runs from forks, so without
+    # them the Sanity vars arrive empty and lint fails as described above.
+    # The fallback values are public (they mirror `.env.example`).
     env:
-      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
-      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID || '5b75k1rw' }}
+      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET || 'production' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-      - run: npm install --no-audit --no-fund
+      # `npm ci` is lockfile-faithful: it fails loudly if package.json and
+      # package-lock.json drift, instead of silently rewriting the lock in CI.
+      - run: npm ci --no-audit --no-fund
       # Mirror the full tests.yml gate set inline so this workflow does not
       # rely on tests.yml having passed in parallel — branch protection makes
       # that the usual case but it is one configuration switch away from a
@@ -61,22 +68,30 @@ jobs:
       # canonical artefact. PUBLIC_SANITY_* is also passed in as a safety net
       # so a future netlify-cli that ignores --no-build still has what it
       # needs to re-build.
+      #
+      # netlify-cli is pinned to a major so a breaking CLI release can't take
+      # down the deploy path at an arbitrary time (including a Sanity-publish
+      # dispatch); bump the pin deliberately.
+      #
+      # Skipped for fork PRs: GitHub withholds secrets from fork-triggered
+      # runs, so the deploy call would fail on an empty NETLIFY_AUTH_TOKEN.
+      # The CI gates above still run for forks via the env fallbacks.
       - name: Deploy preview
-        if: github.event_name == 'pull_request'
-        run: npx netlify-cli@latest deploy --no-build --dir=build --message="PR #${{ github.event.pull_request.number }} @ ${{ github.sha }}"
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: npx netlify-cli@26 deploy --no-build --dir=build --message="PR #${{ github.event.pull_request.number }} @ ${{ github.sha }}"
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
-          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID || '5b75k1rw' }}
+          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET || 'production' }}
 
       - name: Deploy to production
         if: |
           (github.event_name == 'push' && github.ref == 'refs/heads/main')
           || github.event_name == 'repository_dispatch'
-        run: npx netlify-cli@latest deploy --no-build --prod --dir=build --message="${{ github.event_name == 'repository_dispatch' && 'Sanity publish' || 'Commit' }} ${{ github.sha }}"
+        run: npx netlify-cli@26 deploy --no-build --prod --dir=build --message="${{ github.event_name == 'repository_dispatch' && 'Sanity publish' || 'Commit' }} ${{ github.sha }}"
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
-          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+          PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID || '5b75k1rw' }}
+          PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET || 'production' }}

@@ -55,6 +55,8 @@ export interface AboutSection {
 	heading?: string;
 	body?: string;
 	portraitImage?: SanityImage;
+	/** Screen-reader / SEO description of the portrait; empty alt when unset. */
+	portraitAlt?: string;
 	signature?: string;
 	badgeLine1?: string;
 	badgeLine2?: string;
