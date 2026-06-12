@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 _Nothing yet._
 
+## [1.3.1] - 2026-06-12
+
+CI-only follow-up to v1.3.0, mirroring the v1.1.2 precedent. The v1.3.0 commit landed on `main` but both workflows failed at the new `npm ci` step before the deploy could fire, so v1.3.0 never reached production — the live site stayed on v1.2.0. v1.3.1 fixes the workflows so v1.3.0's changes can deploy.
+
+Root cause: GitHub's Node 22 runners bundle npm 10, while `package-lock.json` is authored by npm 11 (the major the `packageManager` field pins). The two majors disagree about tsconfck's _optional_ `typescript ^5` peer dependency (tsconfck arrives via Sanity's Vite toolchain; the root project uses typescript 6): npm 11 honours `peerDependenciesMeta.optional` and leaves the peer out of the tree, where npm 10's validator demands a nested `typescript@5.9.3` lock entry and fails with "Missing: typescript@5.9.3 from lock file". Reproduced locally before fixing — `npx npm@10 ci` fails identically on the same lockfile that npm 11.6.2 and the latest npm 11 both validate cleanly.
+
+### Fixed
+
+- [`.github/workflows/tests.yml`](.github/workflows/tests.yml), [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): both workflows now run `npm install -g npm@11` after `setup-node` and before `npm ci`, so the lockfile is always validated under the same npm major that authored it. The in-workflow comment documents the trap; bump the pin together with the `packageManager` field.
+
 ## [1.3.0] - 2026-06-12
 
 Review and hardening release. Everything here came out of a full-codebase review pass: accessibility and correctness fixes on the home page, a responsive rework of the about portrait with a new optional schema field (`portraitAlt` — the additive schema change driving the minor bump per the version policy above), CI/deploy hardening, and a correction to how the embedded Studio's security headers ship. The Studio headers change is the headline: the relaxed `/studio/*` CSP this repo had carried in `netlify.toml` since v1.1.x never actually reached the browser (Netlify custom headers don't apply to function-served responses), so the deployed Studio ran with no CSP and no robots signal at all; both now ship from a new server hook and were verified against the built output before release. The switch to `npm ci` in CI also surfaced — and this release repairs — silent lockfile drift that `npm install` had been papering over.

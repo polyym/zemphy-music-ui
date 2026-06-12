@@ -48,6 +48,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Node 22 runners bundle npm 10, whose `npm ci` validation disagrees
+      # with this repo's npm 11-authored package-lock.json: npm 10 demands a
+      # lock entry for tsconfck's OPTIONAL `typescript ^5` peer (the root has
+      # typescript 6) and fails with "Missing: typescript@5.9.3 from lock
+      # file", while npm 11 honours `peerDependenciesMeta.optional` and
+      # validates the same lock cleanly. Pin npm to the same major as the
+      # `packageManager` field in package.json so the lock is checked under
+      # the rules it was written with; bump the two together.
+      - run: npm install -g npm@11
       # `npm ci` is lockfile-faithful: it fails loudly if package.json and
       # package-lock.json drift, instead of silently rewriting the lock in CI.
       - run: npm ci --no-audit --no-fund
